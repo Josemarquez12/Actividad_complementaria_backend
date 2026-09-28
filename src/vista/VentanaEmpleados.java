@@ -130,3 +130,105 @@ public class VentanaEmpleados extends JFrame {
     private String formatoPesos(double valor) {
         return String.format("$ %,.0f", valor);
     }
+
+    // ======================= EVENTOS =======================
+
+    private void conectarEventos() {
+        cmbTipo.addActionListener(e -> {
+            boolean usaCampoExtra = tipoSeleccionado().equals("Administrativo")
+                    || tipoSeleccionado().equals("Comercial");
+            txtBonificacion.setEnabled(usaCampoExtra);
+            if (!usaCampoExtra) {
+                txtBonificacion.setText("");
+            }
+        });
+
+        btnAgregar.addActionListener(e -> mostrarResultado(controlador.agregarEmpleado(
+                texto(txtCedula), texto(txtNombre), texto(txtSalario),
+                tipoSeleccionado(), texto(txtBonificacion))));
+
+        btnActualizar.addActionListener(e -> mostrarResultado(controlador.actualizarEmpleado(
+                texto(txtCedula), texto(txtNombre), texto(txtSalario),
+                tipoSeleccionado(), texto(txtBonificacion))));
+
+        btnBuscar.addActionListener(e -> buscar());
+        btnEliminar.addActionListener(e -> eliminar());
+        btnLimpiar.addActionListener(e -> limpiarFormulario());
+        btnHistorial.addActionListener(e -> mostrarHistorial());
+        btnEstadisticas.addActionListener(e -> mostrarEstadisticas());
+    }
+
+    private void mostrarResultado(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje);
+        refrescarTabla();
+    }
+
+    private void buscar() {
+        String cedula = texto(txtCedula);
+        if (cedula.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Escribe una cédula para buscar.");
+            return;
+        }
+        EmpleadoBase empleado = controlador.buscarEmpleado(cedula);
+        if (empleado == null) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontró ningún empleado con la cédula " + cedula + ".");
+            return;
+        }
+        txtNombre.setText(empleado.getNombre());
+        txtSalario.setText(String.format("%.0f", empleado.getSalarioBase()));
+        cmbTipo.setSelectedItem(empleado.getTipo());
+        if (empleado instanceof EmpleadoAdministrativo) {
+            EmpleadoAdministrativo administrativo = (EmpleadoAdministrativo) empleado;
+            txtBonificacion.setText(String.format("%.0f", administrativo.getBonificacion()));
+        }
+        if (empleado instanceof EmpleadoComercial) {
+            EmpleadoComercial comercial = (EmpleadoComercial) empleado;
+            txtBonificacion.setText(String.valueOf(comercial.getPorcentajeComision()));
+        }
+    }
+
+    private void eliminar() {
+        String cedula = texto(txtCedula);
+        int respuesta = JOptionPane.showConfirmDialog(this,
+                "¿Seguro que deseas eliminar al empleado con cédula " + cedula + "?",
+                "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+        if (respuesta == JOptionPane.YES_OPTION) {
+            mostrarResultado(controlador.eliminarEmpleado(cedula));
+            limpiarFormulario();
+        }
+    }
+
+    private void limpiarFormulario() {
+        txtCedula.setText("");
+        txtNombre.setText("");
+        txtSalario.setText("");
+        txtBonificacion.setText("");
+        cmbTipo.setSelectedIndex(0);
+        txtCedula.requestFocus();
+    }
+
+    private void mostrarHistorial() {
+        ArrayList<String> historial = controlador.obtenerHistorial();
+        if (historial.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Aún no hay operaciones registradas.");
+            return;
+        }
+        String texto = "";
+        for (int i = 0; i < historial.size(); i++) {
+            texto += (i + 1) + ". " + historial.get(i) + "\n";
+        }
+        JOptionPane.showMessageDialog(this, texto, "Historial de operaciones",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void mostrarEstadisticas() {
+        HashMap<String, Integer> conteo = controlador.contarPorTipo();
+        String texto = "";
+        for (String tipo : EmpleadoControlador.TIPOS_EMPLEADO) {
+            texto += tipo + ": " + conteo.get(tipo) + "\n";
+        }
+        JOptionPane.showMessageDialog(this, texto, "Estadísticas por tipo",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+}
