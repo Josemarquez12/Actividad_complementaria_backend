@@ -2,7 +2,7 @@ package modelo;
 
 /**
  Un empleado comercial ES UN EmpleadoBase, pero además recibe una comisión
- porcentual sobre su salario base.
+ porcentual sobre su salario base..
  */
 public class EmpleadoComercial extends EmpleadoBase {
 
